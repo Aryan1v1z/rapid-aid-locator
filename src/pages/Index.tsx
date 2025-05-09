@@ -114,7 +114,7 @@ const Index = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold flex items-center">
             <Ambulance className="h-8 w-8 mr-2 text-emergency" />
-            <span>Emergency</span>
+            <span>AIMA</span>
           </h1>
           <Button
             variant="destructive"
@@ -124,6 +124,7 @@ const Index = () => {
             <Phone className="mr-2 h-4 w-4" /> Call 911
           </Button>
         </div>
+        <p className="text-sm text-muted-foreground mt-1">All India Medical Assistance</p>
       </header>
 
       <LocationStatus isLoading={isLoading} error={locationError} />
