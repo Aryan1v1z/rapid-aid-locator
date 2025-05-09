@@ -89,6 +89,7 @@ const Index = () => {
   };
 
   const callEmergency = () => {
+    // Updated to use the tel: protocol without dashes for better compatibility
     window.location.href = "tel:911";
   };
 

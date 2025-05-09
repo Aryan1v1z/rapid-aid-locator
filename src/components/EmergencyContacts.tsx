@@ -39,6 +39,11 @@ const EmergencyContacts: React.FC<EmergencyContactsProps> = ({
     }
   };
 
+  const handleCallContact = (phoneNumber: string) => {
+    // Remove any dashes for better compatibility with the tel: protocol
+    window.location.href = `tel:${phoneNumber.replace(/-/g, "")}`;
+  };
+
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between mb-4">
@@ -94,9 +99,7 @@ const EmergencyContacts: React.FC<EmergencyContactsProps> = ({
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => {
-                    window.location.href = `tel:${contact.phone}`;
-                  }}
+                  onClick={() => handleCallContact(contact.phone)}
                 >
                   <Phone className="h-4 w-4" />
                 </Button>

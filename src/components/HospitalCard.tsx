@@ -11,7 +11,8 @@ interface HospitalCardProps {
 
 const HospitalCard: React.FC<HospitalCardProps> = ({ hospital }) => {
   const handleCall = () => {
-    window.location.href = `tel:${hospital.phone}`;
+    // Use tel: protocol to launch the device's dialpad with the number pre-filled
+    window.location.href = `tel:${hospital.phone.replace(/-/g, "")}`;
   };
 
   return (
