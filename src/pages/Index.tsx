@@ -7,10 +7,11 @@ import { getCurrentPosition, calculateDistance } from "@/services/locationServic
 import HospitalCard from "@/components/HospitalCard";
 import LocationStatus from "@/components/LocationStatus";
 import EmergencyContacts from "@/components/EmergencyContacts";
+import ManualLocationSelector from "@/components/ManualLocationSelector";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { MapPin, Phone, Ambulance } from "lucide-react";
+import { MapPin, Phone, Ambulance, Navigation } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 
 const Index = () => {
@@ -20,6 +21,7 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [isUsingManualLocation, setIsUsingManualLocation] = useState<boolean>(false);
 
   useEffect(() => {
     fetchUserLocation();
@@ -28,29 +30,13 @@ const Index = () => {
   const fetchUserLocation = async () => {
     setIsLoading(true);
     setLocationError(null);
+    setIsUsingManualLocation(false);
     try {
       const position = await getCurrentPosition();
       const { latitude, longitude } = position.coords;
       setUserLocation({ lat: latitude, lng: longitude });
       
-      // Update hospital distances based on user location
-      const hospitalsWithDistance = mockHospitals.map((hospital) => ({
-        ...hospital,
-        distance: calculateDistance(
-          latitude,
-          longitude,
-          hospital.latitude,
-          hospital.longitude
-        )
-      }));
-
-      // Sort hospitals by distance
-      const sortedHospitals = hospitalsWithDistance.sort(
-        (a, b) => a.distance - b.distance
-      );
-      
-      setHospitals(sortedHospitals);
-      setIsLoading(false);
+      updateHospitalDistances(latitude, longitude);
       
       toast({
         title: "Location found",
@@ -58,10 +44,31 @@ const Index = () => {
       });
     } catch (error) {
       console.error("Error getting user location:", error);
-      setLocationError("Unable to access your location. Please enable location services.");
+      setLocationError("Unable to access your location. Please enable location services or use manual location.");
       setHospitals(mockHospitals);
       setIsLoading(false);
     }
+  };
+
+  const updateHospitalDistances = (latitude: number, longitude: number) => {
+    // Update hospital distances based on user location
+    const hospitalsWithDistance = mockHospitals.map((hospital) => ({
+      ...hospital,
+      distance: calculateDistance(
+        latitude,
+        longitude,
+        hospital.latitude,
+        hospital.longitude
+      )
+    }));
+
+    // Sort hospitals by distance
+    const sortedHospitals = hospitalsWithDistance.sort(
+      (a, b) => a.distance - b.distance
+    );
+    
+    setHospitals(sortedHospitals);
+    setIsLoading(false);
   };
 
   const handleAddContact = (contact: Omit<EmergencyContact, "id">) => {
@@ -81,6 +88,18 @@ const Index = () => {
 
   const callEmergency = () => {
     window.location.href = "tel:911";
+  };
+
+  const handleManualLocationSelected = (latitude: number, longitude: number) => {
+    setIsUsingManualLocation(true);
+    setUserLocation({ lat: latitude, lng: longitude });
+    setLocationError(null);
+    updateHospitalDistances(latitude, longitude);
+    
+    toast({
+      title: "Manual location set",
+      description: "Showing hospitals near selected location",
+    });
   };
 
   return (
@@ -103,13 +122,41 @@ const Index = () => {
 
       <LocationStatus isLoading={isLoading} error={locationError} />
 
+      {locationError && (
+        <div className="mb-6">
+          <Button 
+            variant="outline" 
+            className="w-full mb-4 flex items-center justify-center"
+            onClick={fetchUserLocation}
+          >
+            <Navigation className="mr-2 h-4 w-4" /> 
+            Try Again with Automatic Location
+          </Button>
+          
+          <ManualLocationSelector onLocationSelected={handleManualLocationSelected} />
+        </div>
+      )}
+
+      {isUsingManualLocation && !locationError && (
+        <div className="mb-4 flex justify-end">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={fetchUserLocation}
+          >
+            <Navigation className="mr-2 h-4 w-4" /> 
+            Use My Current Location
+          </Button>
+        </div>
+      )}
+
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold flex items-center">
             <MapPin className="h-5 w-5 mr-1 text-hospital" />
             <span>Nearby Hospitals</span>
           </h2>
-          <Badge variant="outline" className="cursor-pointer" onClick={fetchUserLocation}>
+          <Badge variant="outline" className="cursor-pointer" onClick={isUsingManualLocation ? () => {} : fetchUserLocation}>
             Refresh
           </Badge>
         </div>

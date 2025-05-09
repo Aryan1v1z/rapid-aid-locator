@@ -14,3 +14,12 @@ export interface EmergencyContact {
   name: string;
   phone: string;
 }
+
+export interface Location {
+  name: string;
+  state: string;
+  latitude: number;
+  longitude: number;
+}
+
+export type State = "Andhra Pradesh" | "Tamil Nadu";
