@@ -22,6 +22,7 @@ const Index = () => {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [isUsingManualLocation, setIsUsingManualLocation] = useState<boolean>(false);
+  const [showManualSelector, setShowManualSelector] = useState<boolean>(false);
 
   useEffect(() => {
     fetchUserLocation();
@@ -31,6 +32,7 @@ const Index = () => {
     setIsLoading(true);
     setLocationError(null);
     setIsUsingManualLocation(false);
+    setShowManualSelector(false);
     try {
       const position = await getCurrentPosition();
       const { latitude, longitude } = position.coords;
@@ -102,6 +104,10 @@ const Index = () => {
     });
   };
 
+  const toggleManualLocationSelector = () => {
+    setShowManualSelector(!showManualSelector);
+  };
+
   return (
     <div className="max-w-md mx-auto p-4 pt-6 min-h-screen">
       <header className="mb-6">
@@ -137,16 +143,33 @@ const Index = () => {
         </div>
       )}
 
-      {isUsingManualLocation && !locationError && (
+      {!locationError && (
         <div className="mb-4 flex justify-end">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={fetchUserLocation}
-          >
-            <Navigation className="mr-2 h-4 w-4" /> 
-            Use My Current Location
-          </Button>
+          {isUsingManualLocation ? (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={fetchUserLocation}
+            >
+              <Navigation className="mr-2 h-4 w-4" /> 
+              Use My Current Location
+            </Button>
+          ) : (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={toggleManualLocationSelector}
+            >
+              <MapPin className="mr-2 h-4 w-4" /> 
+              {showManualSelector ? "Hide Manual Selection" : "Select Location Manually"}
+            </Button>
+          )}
+        </div>
+      )}
+
+      {showManualSelector && !locationError && (
+        <div className="mb-4">
+          <ManualLocationSelector onLocationSelected={handleManualLocationSelected} />
         </div>
       )}
 
