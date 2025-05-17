@@ -2,26 +2,40 @@
 import React, { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Location, State } from "@/types";
-import { getDistrictsByState } from "@/data/locationData";
+import { getDistrictsByState, getSubDistrictsByDistrict } from "@/data/locationData";
 import { districts } from "@/data/locationData";
 
 interface ManualLocationSelectorProps {
-  onLocationSelected: (latitude: number, longitude: number) => void;
+  onLocationSelected: (latitude: number, longitude: number, district: string, subDistrict?: string) => void;
 }
 
 const ManualLocationSelector: React.FC<ManualLocationSelectorProps> = ({ onLocationSelected }) => {
   const [selectedState, setSelectedState] = useState<State | "">("");
   const [selectedDistrict, setSelectedDistrict] = useState<Location | null>(null);
+  const [selectedSubDistrict, setSelectedSubDistrict] = useState<string>("");
   const [districtOptions, setDistrictOptions] = useState<Location[]>([]);
+  const [subDistrictOptions, setSubDistrictOptions] = useState<string[]>([]);
 
   useEffect(() => {
     if (selectedState) {
       setDistrictOptions(getDistrictsByState(selectedState));
       setSelectedDistrict(null);
+      setSelectedSubDistrict("");
+      setSubDistrictOptions([]);
     } else {
       setDistrictOptions([]);
     }
   }, [selectedState]);
+
+  useEffect(() => {
+    if (selectedDistrict) {
+      const subDistricts = getSubDistrictsByDistrict(selectedDistrict.name);
+      setSubDistrictOptions(subDistricts);
+      setSelectedSubDistrict("");
+    } else {
+      setSubDistrictOptions([]);
+    }
+  }, [selectedDistrict]);
 
   const handleStateChange = (value: string) => {
     setSelectedState(value as State);
@@ -31,7 +45,19 @@ const ManualLocationSelector: React.FC<ManualLocationSelectorProps> = ({ onLocat
     const district = districts.find(d => d.name === value);
     if (district) {
       setSelectedDistrict(district);
-      onLocationSelected(district.latitude, district.longitude);
+      // If there are no sub-districts, select the district directly
+      if (getSubDistrictsByDistrict(district.name).length === 0) {
+        onLocationSelected(district.latitude, district.longitude, district.name);
+      }
+    }
+  };
+
+  const handleSubDistrictChange = (value: string) => {
+    setSelectedSubDistrict(value);
+    if (selectedDistrict) {
+      // For simplicity, using district coordinates for its sub-districts
+      // In a real app, you would have precise coordinates for each sub-district
+      onLocationSelected(selectedDistrict.latitude, selectedDistrict.longitude, selectedDistrict.name, value);
     }
   };
 
@@ -71,6 +97,29 @@ const ManualLocationSelector: React.FC<ManualLocationSelectorProps> = ({ onLocat
               {districtOptions.map((district) => (
                 <SelectItem key={district.name} value={district.name}>
                   {district.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {subDistrictOptions.length > 0 && (
+        <div className="space-y-2">
+          <label htmlFor="sub-district-select" className="text-sm font-medium">
+            Select Sub-District
+          </label>
+          <Select 
+            value={selectedSubDistrict} 
+            onValueChange={handleSubDistrictChange}
+          >
+            <SelectTrigger id="sub-district-select">
+              <SelectValue placeholder="Select a sub-district" />
+            </SelectTrigger>
+            <SelectContent>
+              {subDistrictOptions.map((subDistrict) => (
+                <SelectItem key={subDistrict} value={subDistrict}>
+                  {subDistrict}
                 </SelectItem>
               ))}
             </SelectContent>

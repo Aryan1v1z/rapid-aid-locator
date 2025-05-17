@@ -35,6 +35,34 @@ export const districts: Location[] = [
   { name: "Tiruchirappalli", state: "Tamil Nadu", latitude: 10.7905, longitude: 78.7047 }
 ];
 
+export const subDistricts = {
+  // Andhra Pradesh sub-districts
+  "Visakhapatnam": [
+    "Gajuwaka", "Anakapalle", "Bheemunipatnam", "Pendurthi"
+  ],
+  "Guntur": [
+    "Mangalagiri", "Tenali", "Ponnur", "Repalle"
+  ],
+  "Krishna": [
+    "Vijayawada", "Machilipatnam", "Gudivada", "Nuzvid"
+  ],
+  
+  // Tamil Nadu sub-districts
+  "Chennai": [
+    "Mylapore", "Adyar", "T. Nagar", "Anna Nagar"
+  ],
+  "Coimbatore": [
+    "Mettupalayam", "Pollachi", "Valparai", "Sulur"
+  ],
+  "Madurai": [
+    "Melur", "Usilampatti", "Peraiyur", "Thirumangalam"
+  ]
+};
+
 export const getDistrictsByState = (state: string): Location[] => {
   return districts.filter(district => district.state === state);
+};
+
+export const getSubDistrictsByDistrict = (district: string): string[] => {
+  return subDistricts[district as keyof typeof subDistricts] || [];
 };

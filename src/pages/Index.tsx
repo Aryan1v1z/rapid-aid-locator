@@ -1,13 +1,14 @@
 
 import React, { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { Hospital, EmergencyContact } from "@/types";
-import { mockHospitals } from "@/data/mockHospitals";
+import { Hospital, EmergencyContact, Language as LanguageType } from "@/types";
+import { mockHospitals, getHospitalsBySubDistrict } from "@/data/mockHospitals";
 import { getCurrentPosition, calculateDistance } from "@/services/locationService";
 import HospitalCard from "@/components/HospitalCard";
 import LocationStatus from "@/components/LocationStatus";
 import EmergencyContacts from "@/components/EmergencyContacts";
 import ManualLocationSelector from "@/components/ManualLocationSelector";
+import LanguageSelector from "@/components/LanguageSelector";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -23,6 +24,9 @@ const Index = () => {
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [isUsingManualLocation, setIsUsingManualLocation] = useState<boolean>(false);
   const [showManualSelector, setShowManualSelector] = useState<boolean>(false);
+  const [selectedDistrict, setSelectedDistrict] = useState<string>("");
+  const [selectedSubDistrict, setSelectedSubDistrict] = useState<string>("");
+  const [language, setLanguage] = useState<LanguageType>("English");
 
   useEffect(() => {
     fetchUserLocation();
@@ -33,6 +37,8 @@ const Index = () => {
     setLocationError(null);
     setIsUsingManualLocation(false);
     setShowManualSelector(false);
+    setSelectedDistrict("");
+    setSelectedSubDistrict("");
     try {
       const position = await getCurrentPosition();
       const { latitude, longitude } = position.coords;
@@ -52,9 +58,18 @@ const Index = () => {
     }
   };
 
-  const updateHospitalDistances = (latitude: number, longitude: number) => {
+  const updateHospitalDistances = (latitude: number, longitude: number, district?: string, subDistrict?: string) => {
+    // Filter hospitals based on selected location parameters if available
+    let filteredHospitals = [...mockHospitals];
+    
+    if (subDistrict) {
+      filteredHospitals = getHospitalsBySubDistrict(subDistrict);
+    } else if (district) {
+      filteredHospitals = filteredHospitals.filter(h => h.address.includes(district));
+    }
+
     // Update hospital distances based on user location
-    const hospitalsWithDistance = mockHospitals.map((hospital) => ({
+    const hospitalsWithDistance = filteredHospitals.map((hospital) => ({
       ...hospital,
       distance: calculateDistance(
         latitude,
@@ -71,6 +86,14 @@ const Index = () => {
     
     setHospitals(sortedHospitals);
     setIsLoading(false);
+  };
+
+  const handleLanguageChange = (newLanguage: LanguageType) => {
+    setLanguage(newLanguage);
+    toast({
+      title: "Language changed",
+      description: `Application language set to ${newLanguage}`,
+    });
   };
 
   const handleAddContact = (contact: Omit<EmergencyContact, "id">) => {
@@ -93,20 +116,31 @@ const Index = () => {
     window.location.href = "tel:911";
   };
 
-  const handleManualLocationSelected = (latitude: number, longitude: number) => {
+  const handleManualLocationSelected = (latitude: number, longitude: number, district: string, subDistrict?: string) => {
     setIsUsingManualLocation(true);
     setUserLocation({ lat: latitude, lng: longitude });
+    setSelectedDistrict(district);
+    setSelectedSubDistrict(subDistrict || "");
     setLocationError(null);
-    updateHospitalDistances(latitude, longitude);
+    updateHospitalDistances(latitude, longitude, district, subDistrict);
+    
+    const locationDescription = subDistrict 
+      ? `${subDistrict}, ${district}`
+      : district;
     
     toast({
       title: "Manual location set",
-      description: "Showing hospitals near selected location",
+      description: `Showing hospitals near ${locationDescription}`,
     });
   };
 
   const toggleManualLocationSelector = () => {
     setShowManualSelector(!showManualSelector);
+  };
+
+  // Get the appropriate emergency number based on selected language/region
+  const getEmergencyNumber = () => {
+    return "108"; // Using 108 as the standard emergency medical helpline in India
   };
 
   return (
@@ -117,15 +151,23 @@ const Index = () => {
             <Ambulance className="h-8 w-8 mr-2 text-emergency" />
             <span>AIMA</span>
           </h1>
-          <Button
-            variant="destructive"
-            className="bg-emergency hover:bg-emergency-hover text-emergency-foreground"
-            onClick={callEmergency}
-          >
-            <Phone className="mr-2 h-4 w-4" /> Call 911
-          </Button>
+          <div className="flex space-x-2">
+            <LanguageSelector currentLanguage={language} onLanguageChange={handleLanguageChange} />
+            <Button
+              variant="destructive"
+              className="bg-emergency hover:bg-emergency-hover text-emergency-foreground"
+              onClick={callEmergency}
+            >
+              <Phone className="mr-2 h-4 w-4" /> Call {getEmergencyNumber()}
+            </Button>
+          </div>
         </div>
         <p className="text-sm text-muted-foreground mt-1">All India Medical Assistance</p>
+        {selectedDistrict && (
+          <Badge variant="outline" className="mt-2">
+            {selectedSubDistrict ? `${selectedSubDistrict}, ${selectedDistrict}` : selectedDistrict}
+          </Badge>
+        )}
       </header>
 
       <LocationStatus isLoading={isLoading} error={locationError} />

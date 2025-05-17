@@ -7,6 +7,7 @@ export interface Hospital {
   distance: number; // in kilometers
   latitude: number;
   longitude: number;
+  subDistrict?: string;
 }
 
 export interface EmergencyContact {
@@ -23,3 +24,4 @@ export interface Location {
 }
 
 export type State = "Andhra Pradesh" | "Tamil Nadu";
+export type Language = "English" | "Telugu" | "Tamil" | "Hindi";

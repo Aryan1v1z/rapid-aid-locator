@@ -22,6 +22,11 @@ const HospitalCard: React.FC<HospitalCardProps> = ({ hospital }) => {
           <div>
             <h3 className="text-lg font-bold">{hospital.name}</h3>
             <p className="text-sm text-muted-foreground">{hospital.address}</p>
+            {hospital.subDistrict && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                <span className="font-medium">Sub-district:</span> {hospital.subDistrict}
+              </p>
+            )}
           </div>
           <div className="bg-blue-50 px-2 py-1 rounded-full">
             <span className="text-hospital text-sm font-medium">{hospital.distance} km</span>
